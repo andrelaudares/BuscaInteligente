@@ -1,6 +1,6 @@
-streamlit==1.26.0
-pandas==2.1.0
-matplotlib==3.8.0
-seaborn==0.12.2
-requests==2.31.0
-beautifulsoup4==4.12.2
+streamlit
+pandas
+requests
+beautifulsoup4
+plotly
+openpyxl
