@@ -1,6 +1,7 @@
 streamlit
 pandas
-requests
-beautifulsoup4
 plotly
+beautifulsoup4
+requests
+pillow
 openpyxl
