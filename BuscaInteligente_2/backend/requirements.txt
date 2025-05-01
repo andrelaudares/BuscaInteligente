@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+requests
+beautifulsoup4
+pandas
+pydantic==2.4.2
+python-dotenv==1.0.0
+pytest==7.4.3
+httpx==0.25.1
+selenium==4.15.2
+webdriver-manager==4.0.1
+aiohttp==3.9.1
+asyncio==3.4.3
+numpy==1.26.2 

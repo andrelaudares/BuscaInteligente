@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProNutrition Busca Inteligente</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="header-content">
+            <img src="./img/logo-pronutrition.png" alt="Logo ProNutrition" class="header-logo">
+            <div class="header-text">
+                <h1>ProNutrition Busca Inteligente</h1>
+                <p>Comparando preços e parametros de produtos</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="search-panel">
+            <h3><span class="icon"><img src="./img/lupa.png" alt="Ícone de Busca" class="icon-img"></span> O que você está procurando?</h3>
+            <div class="search-box">
+                <input type="text" id="search-query" placeholder="Ex: Whey Protein, Creatina...">
+                <button id="search-button">Buscar </button>
+            </div>
+        </div>
+
+        <div class="filters-panel">
+            <h4>Filtros Avançados</h4>
+            <div class="filter-grid">
+                <div class="filter-group price-range">
+                    <label><img src="./img/faixa-preco.png" alt="Ícone de Faixa de Preço" class="icon-img"> Faixa de Preço</label>
+                    <div class="price-inputs">
+                         <input type="number" id="min-price" placeholder="Mín R$" min="0" step="10">
+                         <span>-</span>
+                         <input type="number" id="max-price" placeholder="Máx R$" min="0" step="10">
+                    </div>
+                </div>
+
+                <div class="filter-group sort-by">
+                    <label for="sort-by"><img src="./img/ordenar.png" alt="Ícone de Ordenação" class="icon-img"> Ordenar por</label>
+                    <select id="sort-by" name="sort-by">
+                        <option value="price_asc">Menor Preço</option>
+                        <option value="price_desc">Maior Preço</option>
+                        <option value="name_asc">Nome (A-Z)</option>
+                        <!-- <option value="name_desc">Nome (Z-A)</option> -->
+                        <!-- <option value="store_asc">Loja</option> -->
+                    </select>
+                </div>
+
+                <div class="filter-group results-limit">
+                     <label for="max-results"><img src="./img/resultado-loja.png" alt="Ícone de Resultados por Loja" class="icon-img"> Resultados por Loja: <span id="max-results-value">5</span></label>
+                     <input type="range" id="max-results" name="max-results" min="1" max="10" value="5" oninput="document.getElementById('max-results-value').textContent=this.value">
+                </div>
+
+                <div class="filter-group stores">
+                    <label><img src="./img/lojas-disponiveis.png" alt="Ícone de Lojas Disponíveis" class="icon-img"> Lojas Disponíveis</label>
+                    <div id="stores-list" class="checkbox-group">
+                        <!-- Checkboxes das lojas serão carregados aqui via JS -->
+                        <p style="font-size:0.8em; color:#666;">(Carregando lojas...)</p>
+                        <!-- Exemplo estático (remover depois): -->
+                        <div><input type="checkbox" id="store-amazon" name="store" value="Amazon" checked> <label for="store-amazon">Amazon</label></div>
+                        <div><input type="checkbox" id="store-ml" name="store" value="Mercado Livre" checked> <label for="store-ml">Mercado Livre</label></div>
+                    </div>
+                </div>
+
+                 <div class="filter-group brands">
+                    <label><img src="./img/marcas.png" alt="Ícone de Marcas" class="icon-img"> Marcas</label>
+                    <div id="brands-list" class="checkbox-group">
+                         <!-- Checkboxes das marcas serão carregados aqui via JS após busca -->
+                         <p style="font-size:0.8em; color:#666;">(Marcas aparecerão após a busca)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="results-area">
+            <h2>Resultados da Busca</h2>
+            <div id="export-button-container" style="margin-bottom: 20px; text-align: right;">
+                 <!-- Botão de exportar será adicionado aqui se houver resultados -->
+            </div>
+            <div id="products-container" class="results-grid">
+                <!-- Cards de produtos serão inseridos aqui -->
+                <p>Realize uma busca para ver os produtos.</p>
+            </div>
+            <div id="loading-indicator" class="loading-indicator" style="display: none;">
+                <div class="spinner"></div>
+                <p><img src="./img/ampulheta.png" alt="Ícone de Ampulheta" class="icon-img"> Buscando produtos...</p>
+            </div>
+            <div id="error-message" class="error-message" style="display: none;">
+                <!-- Mensagens de erro aparecerão aqui -->
+            </div>
+        </div>
+
+    </main>
+
+    <footer>
+        <!-- Rodapé (se necessário) -->
+    </footer>
+
+    <!-- Scripts JS (necessários para interatividade e API) -->
+    <script src="js/app.js"></script>
+</body>
+</html> 

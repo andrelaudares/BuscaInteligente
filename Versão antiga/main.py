@@ -23,6 +23,13 @@ st.set_page_config(
 # Configuração do tema
 st.markdown("""
     <style>
+    /* Forçar substituição de rgb(255, 75, 75) para #62ac44 */
+    [style*="rgb(255, 75, 75)"] {
+        background-color: #62ac44 !important;
+        border-color: #62ac44 !important;
+        color: #62ac44 !important;
+    }
+    
     /* Botão de busca específico */
     button[data-testid="stBaseButton-primaryFormSubmit"] {
         background-color: #62ac44 !important;
@@ -36,7 +43,7 @@ st.markdown("""
     }
     
     /* Slider thumb */
-    .st-emotion-cache-1dj3ksd.e8lt0n70 {
+    .st-emotion-cache-1dj3ksd {
         background-color: #62ac44 !important;
     }
     
@@ -55,18 +62,18 @@ st.markdown("""
     
     /* Checkbox */
     div[data-testid="stCheckbox"] > label > div[role="checkbox"] {
-        background-color: black !important;
-        border-color: black !important;
+        background-color: #62ac44 !important;
+        border-color: #62ac44 !important;
     }
     
     div[data-testid="stCheckbox"] > label > div[role="checkbox"]:checked {
-        background-color: black !important;
-        border-color: black !important;
+        background-color: #62ac44 !important;
+        border-color: #62ac44 !important;
     }
     
     /* Cor do texto dos checkboxes */
     div[data-testid="stCheckbox"] > label > div[data-testid="stMarkdownContainer"] > p {
-        color: black !important;
+        color: #62ac44 !important;
     }
     
     /* Slider */
@@ -90,6 +97,34 @@ st.markdown("""
         color: white !important;
     }
     </style>
+    
+    <script>
+    // Função para substituir a cor rgb(255, 75, 75) por #62ac44
+    function replaceRedColor() {
+        // Seleciona todos os elementos que podem ter a cor vermelha
+        const elements = document.querySelectorAll('*');
+        elements.forEach(element => {
+            // Verifica o background-color
+            if (window.getComputedStyle(element).backgroundColor === 'rgb(255, 75, 75)') {
+                element.style.backgroundColor = '#62ac44';
+            }
+            // Verifica o border-color
+            if (window.getComputedStyle(element).borderColor === 'rgb(255, 75, 75)') {
+                element.style.borderColor = '#62ac44';
+            }
+            // Verifica o color
+            if (window.getComputedStyle(element).color === 'rgb(255, 75, 75)') {
+                element.style.color = '#62ac44';
+            }
+        });
+    }
+
+    // Executa a função quando a página carrega
+    window.addEventListener('load', replaceRedColor);
+    
+    // Executa a função periodicamente para pegar elementos que são carregados dinamicamente
+    setInterval(replaceRedColor, 1000);
+    </script>
 """, unsafe_allow_html=True)
 
 # Carregar o logo
