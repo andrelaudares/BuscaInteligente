@@ -42,7 +42,6 @@ def _get_random_headers():
         'Sec-Fetch-Site': 'same-origin', # Ou 'none' ou 'cross-site' dependendo do contexto
         'Sec-Fetch-User': '?1',
         'Upgrade-Insecure-Requests': '1',
-        'Connection': 'keep-alive',
         'Referer': 'https://www.amazon.com.br/',
         'Pragma': 'no-cache',
         'Cache-Control': 'max-age=0', # Da versão antiga
@@ -104,26 +103,38 @@ def search_amazon(query: str, max_results: int = 5, retries: int = 3) -> List[Di
 
             # Checar por bloqueio (pode ter status 200 mas ser página de captcha/bloqueio)
             if "api-services-support@amazon.com" in response.text or "Something went wrong" in response.text or response.status_code == 503:
-                logging.warning(f"[Amazon] Bloqueio detectado ou erro 503 (Status: {response.status_code}). Tentando novamente em {current_try * 2}s...")
-                time.sleep(current_try * 2) # Backoff exponencial simples
+                wait_time = current_try * random.uniform(3, 6) # Aumentar o tempo base e adicionar mais aleatoriedade
+                logging.warning(f"[Amazon] Bloqueio detectado ou erro 503 (Status: {response.status_code}). Tentando novamente em {wait_time:.1f}s...")
+                time.sleep(wait_time) # Backoff exponencial com jitter
                 continue # Pula para próxima tentativa
 
             response.raise_for_status() # Lança exceção para outros erros HTTP
             logging.info(f"[Amazon] Status: {response.status_code}")
 
             soup = BeautifulSoup(response.content, 'html.parser')
-            # ** Novos Seletores (Ajustar conforme necessário após inspeção manual) **
+            
+            # Salvar HTML para inspeção (temporário para depuração)
+            with open(f"amazon_debug_{current_try}.html", "w", encoding="utf-8") as f:
+                f.write(str(soup))
+            logging.info(f"[Amazon] HTML salvo para depuração em amazon_debug_{current_try}.html")
+            
+            # Seletores atualizados para Amazon
+            # Primeiro seletor principal (mais específico)
             items = soup.select('div.s-result-item[data-asin]:not([data-asin=""])')
             logging.info(f"[Amazon] Itens brutos encontrados com seletor principal: {len(items)}")
 
-            # Se o seletor principal falhar, tente um alternativo (menos comum)
+            # Seletores alternativos se o principal falhar
             if not items:
                 items = soup.select('div[data-component-type="s-search-result"]')
                 logging.info(f"[Amazon] Itens brutos encontrados com seletor alternativo: {len(items)}")
+                
+            if not items:
+                items = soup.select('.s-main-slot > div[data-asin]')
+                logging.info(f"[Amazon] Itens brutos encontrados com terceiro seletor: {len(items)}")
 
             processed_asins = set()
 
-            for item in items:
+            for i, item in enumerate(items):
                 if len(results) >= max_results:
                     break
 
@@ -131,58 +142,127 @@ def search_amazon(query: str, max_results: int = 5, retries: int = 3) -> List[Di
                 if not asin or asin in processed_asins:
                     continue
 
+                logging.info(f"[Amazon] Processando item {i+1}/{len(items)} - ASIN: {asin}")
+
                 try:
-                    # Seletores atualizados (baseados em inspeção comum, podem precisar de ajuste fino)
-                    title_element = item.select_one('h2 a.a-link-normal span.a-text-normal')
-                    price_element = item.select_one('span.a-price > span.a-offscreen') # Preço geralmente está em 'a-offscreen'
-                    # Seletor de link refinado com base na versão antiga
-                    link_element = item.select_one('a.a-link-normal.s-link-style[href*="/dp/"]')
+                    # Seletores atualizados conforme arquivo de contexto
+                    # Seletores para título
+                    title_selectors = [
+                        'h2 a span',
+                        'h2 span.a-text-normal',
+                        'h2 a.a-link-normal span',
+                        '.a-size-base-plus.a-color-base.a-text-normal',
+                        '.a-size-medium.a-color-base.a-text-normal'
+                    ]
+                    
+                    # Seletores para preço
+                    price_selectors = [
+                        'span.a-price > span.a-offscreen',
+                        'span.a-price span.a-offscreen',
+                        'span.a-color-price',
+                        '.a-price .a-offscreen'
+                    ]
+                    
+                    # Seletores para link
+                    link_selectors = [
+                        'a.a-link-normal.s-no-outline',
+                        'h2 a.a-link-normal[href*="/dp/"]',
+                        'a.a-link-normal.s-link-style[href*="/dp/"]',
+                        '.a-link-normal[href*="/dp/"]'
+                    ]
+                    
+                    # Seletores para imagem
+                    image_selectors = [
+                        'img.s-image',
+                        '.s-image',
+                        'img[data-image-load]'
+                    ]
+                    
+                    # Tentar todos os seletores para cada elemento
+                    title_element = None
+                    for selector in title_selectors:
+                        title_element = item.select_one(selector)
+                        if title_element:
+                            logging.info(f"[Amazon] Título encontrado com seletor: {selector}")
+                            break
+                    
+                    price_element = None
+                    for selector in price_selectors:
+                        price_element = item.select_one(selector)
+                        if price_element:
+                            logging.info(f"[Amazon] Preço encontrado com seletor: {selector}")
+                            break
+                    
+                    link_element = None
+                    for selector in link_selectors:
+                        link_element = item.select_one(selector)
+                        if link_element:
+                            logging.info(f"[Amazon] Link encontrado com seletor: {selector}")
+                            break
+                    
+                    image_element = None
+                    for selector in image_selectors:
+                        image_element = item.select_one(selector)
+                        if image_element:
+                            logging.info(f"[Amazon] Imagem encontrada com seletor: {selector}")
+                            break
+                    
+                    # Log de resultados de extração
+                    if not title_element:
+                        logging.warning(f"[Amazon] Título não encontrado para ASIN {asin}")
+                    if not price_element:
+                        logging.warning(f"[Amazon] Preço não encontrado para ASIN {asin}")
                     if not link_element:
-                         # Fallback se o seletor mais específico falhar
-                         link_element = item.select_one('h2 a.a-link-normal[href*="/dp/"]')
-                    image_element = item.select_one('img.s-image')
+                        logging.warning(f"[Amazon] Link não encontrado para ASIN {asin}")
+                    if not image_element:
+                        logging.warning(f"[Amazon] Imagem não encontrada para ASIN {asin}")
 
-                    if not (title_element and price_element and link_element):
-                        # logging.debug(f"[Amazon] Item incompleto (sem título, preço ou link): ASIN {asin}")
-                        continue
+                    # Condição mais flexível: só precisamos de título e link no mínimo
+                    if title_element and link_element:
+                        title = title_element.text.strip()
+                        link = link_element.get('href')
+                        
+                        # Garantir que o link seja absoluto
+                        if link and link.startswith('/'):
+                            link = urljoin("https://www.amazon.com.br", link)
+                            
+                        # Se tiver preço, extrair; caso contrário, usar 0.0
+                        price = 0.0
+                        if price_element:
+                            price_text = price_element.text.strip()
+                            price = _parse_price(price_text)
+                            
+                        brand = _extract_brand(title)
+                        image_url = image_element.get('src') if image_element else None
 
-                    title = title_element.text.strip()
-                    price_text = price_element.text.strip()
-                    price = _parse_price(price_text)
-                    brand = _extract_brand(title)
-                    # Garante que o link seja absoluto
-                    relative_link = link_element.get('href')
-                    if relative_link and relative_link.startswith('/'):
-                         link = urljoin("https://www.amazon.com.br", relative_link)
+                        # Log do produto sendo adicionado (antes de validações finais)
+                        logging.info(f"[Amazon] Produto extraído: {title[:30]}... (Preço: {price}, Link: {link[:50]}...)")
+                        
+                        # Condições menos rígidas para adicionar produto
+                        if title and link and link.startswith('http'):
+                            product_data = {
+                                'brand': brand,
+                                'title': title,
+                                'price': price,
+                                'store': 'Amazon',
+                                'link': link,
+                                'image_url': image_url
+                            }
+                            results.append(product_data)
+                            processed_asins.add(asin)
+                            logging.info(f"[Amazon] Produto adicionado: {title[:30]}... ({brand}) - R${price:.2f}")
+                        else:
+                            logging.warning(f"[Amazon] Dados inválidos para ASIN {asin}: title='{title}', link='{link}'")
                     else:
-                         # Se já for absoluto ou não começar com '/', usar como está (improvável mas seguro)
-                         link = relative_link
-
-                    image_url = image_element.get('src') if image_element else None
-
-                    # Validar se os dados mínimos existem
-                    if title and price > 0 and link and link.startswith('http'):
-                        product_data = {
-                            'brand': brand,
-                            'title': title,
-                            'price': price,
-                            'store': 'Amazon',
-                            'link': link,
-                            'image_url': image_url
-                        }
-                        results.append(product_data)
-                        processed_asins.add(asin)
-                        logging.info(f"[Amazon] Produto adicionado: {title[:30]}... ({brand}) - R${price:.2f}")
-                    else:
-                         logging.warning(f"[Amazon] Dados inválidos para ASIN {asin}: title='{title}', price={price}, link='{link}'")
+                        logging.warning(f"[Amazon] Elementos essenciais não encontrados para ASIN {asin}")
 
                 except Exception as e:
-                    logging.error(f"[Amazon] Erro processando item ASIN {asin}: {e}", exc_info=False) # Evitar stacktrace longo no log normal
+                    logging.error(f"[Amazon] Erro processando item ASIN {asin}: {e}", exc_info=True)
                     continue
 
             # Se encontrou resultados, sair do loop de tentativas
             if results:
-                 logging.info(f"[Amazon] Busca bem-sucedida na tentativa {current_try}.")
+                 logging.info(f"[Amazon] Busca bem-sucedida na tentativa {current_try}. Produtos encontrados: {len(results)}")
                  break
             elif current_try == retries:
                  logging.warning(f"[Amazon] Nao encontrou resultados apos {retries} tentativas.")
@@ -190,7 +270,9 @@ def search_amazon(query: str, max_results: int = 5, retries: int = 3) -> List[Di
         except requests.exceptions.RequestException as e:
             logging.error(f"[Amazon] Erro na requisição (Tentativa {current_try}): {e}")
             if current_try < retries:
-                time.sleep(current_try * 2)
+                wait_time = current_try * random.uniform(3, 6) # Usar a mesma lógica de backoff
+                logging.info(f"[Amazon] Aguardando {wait_time:.1f}s antes de tentar novamente...")
+                time.sleep(wait_time)
             else:
                 logging.error("[Amazon] Maximo de tentativas atingido.")
         except Exception as e:
