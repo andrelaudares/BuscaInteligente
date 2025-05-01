@@ -133,7 +133,7 @@ main.container {
     font-size: 1.3rem;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
 }
 
 .search-panel h3 .icon {
@@ -199,14 +199,14 @@ main.container {
     gap: 10px;
 }
 
-.filter-group label:not(.checkbox-label) { /* Não aplica a labels de checkbox customizado */
+.filter-group label:not(.checkbox-label) {
     font-weight: 700;
     font-size: 0.95rem;
     color: #000000;
     margin-bottom: 5px;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
 }
 
 /* Inputs genéricos nos filtros */
@@ -280,22 +280,27 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: var(--color-green);
     cursor: pointer;
     border: none;
-    margin-top: -6px; /* Centraliza verticalmente */
+    margin-top: -5px; /* Mantendo -5px que deve ser o correto para 16px thumb e 6px track */
+    position: relative;
+    z-index: 2;
 }
 
 input[type="range"]::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: var(--color-green);
     cursor: pointer;
     border: none;
+    position: relative;
+    z-index: 2;
+    /* Firefox não precisa de margin-top negativo geralmente */
 }
 
 /* Track (barra) */
@@ -304,13 +309,17 @@ input[type="range"]::-webkit-slider-runnable-track {
     height: 6px;
     border-radius: 3px;
     background: linear-gradient(to right, var(--color-green) var(--range-progress, 0%), #ccc var(--range-progress, 0%));
+    position: relative;
+    z-index: 1;
 }
 
 input[type="range"]::-moz-range-track {
     width: 100%;
     height: 6px;
     border-radius: 3px;
-    background: #ccc;
+    background: #ccc; /* Firefox usa ::-moz-range-progress para a parte preenchida */
+    position: relative;
+    z-index: 1;
 }
 
 input[type="range"]::-moz-range-progress {
@@ -639,29 +648,33 @@ input[type="range"]::-moz-range-progress {
 }
 
 .icon-img {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     display: inline-block;
     vertical-align: middle;
     object-fit: contain;
-    margin-right: 8px;
+    margin-right: 0;
+    flex-shrink: 0;
 }
 
 /* Ajuste para o título da busca */
 .search-panel h3 {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
 }
 
 /* Ajuste para o indicador de loading */
 .loading-indicator p {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
 }
 
 /* Ajuste para ícones em geral */
 img.icon-img {
+    width: 18px;
+    height: 18px;
+    margin-right: 0;
     flex-shrink: 0;
 } 
